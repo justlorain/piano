@@ -47,10 +47,12 @@ const (
 func (forest MethodForest) get(method string) (router *tree, ok bool) {
 	for _, tree := range forest {
 		if tree.method == method {
-			return tree, true
+			router = tree
+			ok = true
+			return
 		}
 	}
-	return nil, false
+	return
 }
 
 // addRoute adds a node with the given handle to the path

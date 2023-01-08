@@ -5,7 +5,7 @@ import (
 	"github.com/B1NARY-GR0UP/inquisitor/core"
 )
 
-// M music is used to make build JSON response simpler
+// M music is used to simplified code
 type M map[string]any
 
 // validateRoute return true if the route is valid

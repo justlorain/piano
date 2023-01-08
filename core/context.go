@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 )
 
 // PianoKey play the piano with PianoKeys
@@ -15,6 +16,8 @@ type PianoKey struct {
 	index    int
 	Params   Params
 	Handlers HandlersChain
+	rwMutex  sync.RWMutex
+	KVs      M
 }
 
 // NewContext will return a new context object which is piano key
@@ -32,6 +35,33 @@ func (pk *PianoKey) Next(ctx context.Context) {
 	for i := pk.index; i < len(pk.Handlers); i++ {
 		pk.Handlers[i](ctx, pk)
 	}
+}
+
+// Set will store the key and value into this PianoKey
+func (pk *PianoKey) Set(key string, value any) {
+	pk.rwMutex.Lock()
+	// lazy initializes
+	if pk.KVs == nil {
+		pk.KVs = make(M)
+	}
+	pk.KVs[key] = value
+	pk.rwMutex.Unlock()
+}
+
+// Get will return the value corresponding to the given key, it will return (nil, false) if key does not exist
+func (pk *PianoKey) Get(key string) (value any, ok bool) {
+	pk.rwMutex.RLock()
+	value, ok = pk.KVs[key]
+	pk.rwMutex.RUnlock()
+	return
+}
+
+// MustGet will return the value corresponding to the given key, it will panic if key does not exist
+func (pk *PianoKey) MustGet(key string) any {
+	if value, ok := pk.Get(key); ok {
+		return value
+	}
+	panic("key \"" + key + "\" does not exist")
 }
 
 // Query is used to match HTTP GET query params
@@ -128,5 +158,5 @@ func (pk *PianoKey) String(code int, format string, data ...any) {
 
 // refresh will reset the PianoKey as a new one
 func (pk *PianoKey) refresh() {
-	// TODO:
+	// TODO: refer to gin's implementation
 }
